@@ -1,0 +1,99 @@
+pipeline {
+    agent any
+    environment {
+        ZONE = "us-central1-e"
+        IMAGE_NAME = "pythonn-kubernets"
+        ARTIFACT_REPO = "us-central1-docker.pkg.dev/sam-452209/my-docker-1"
+        CLUSTER_NAME = "cluster-2"
+        GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp')
+    }
+    stages {
+        stage('docker login') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'docker-hub', 
+                                                  usernameVariable: 'DOCKER_USER', 
+                                                  passwordVariable: 'DOCKER_PASS')]) {
+                    sh '''
+                    echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                    '''
+                }
+            }
+        }
+        stage('gcp login') {
+            steps {
+                sh '''
+                gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS
+                gcloud auth configure-docker us-central1-docker.pkg.dev
+                '''
+            }
+        }
+        stage("build image") {
+            steps {
+                sh '''
+                docker build "$IMAGE_NAME" .
+                docker tag "$IMAGE_NAME" ganesh6498/$IMAGE_NAME:$BUILD_NUMBER
+                '''
+            }
+        }
+        stage('docker push') {
+            steps {
+                sh '''
+                docker push ganesh6498/$IMAGE_NAME:$BUILD_NUMBER
+                '''
+            }
+        }
+        stage("push artifact") {
+            steps {
+                sh '''
+                docker tag $IMAGE_NAME $ARTIFACT_REPO/$IMAGE_NAME:$BUILD_NUMBER
+                docker push $ARTIFACT_REPO/$IMAGE_NAME:$BUILD_NUMBER
+                '''
+            }
+        }
+        stage('terraform apply') {
+            steps {
+                sh ''' 
+                terraform init
+                terraform plan
+                terraform apply --auto-approve
+                '''
+            }
+        }
+        stage("wait for connection") {
+            steps {
+                retry(3) {
+                    sh '''  
+                    sleep 10
+                    gcloud container clusters get-credentials $CLUSTER_NAME --zone '$ZONE' --project sam-453310
+                    '''
+                }
+            }
+        }
+        stage('Label Node') {
+            steps {
+                script {
+                    NODE_NAME = sh(script: "kubectl get nodes -o jsonpath='{.items[0].metadata.name}'", returnStdout: true).trim()
+                    sh "kubectl label nodes $NODE_NAME label=sql --overwrite"
+                }
+            }
+        }
+        stage("run backend sql") {
+            steps {
+                sh ''' 
+                kubectl apply -f config_map.yml
+                kubectl apply -f sql.yml
+                kubectl apply -f sql_service.yml
+                kubectl apply -f frontend.yml
+                ''' 
+            }
+        }
+        stage("get svc") {
+            steps {
+                sh ''' 
+                kubectl get svc
+                '''
+            }
+        }
+    }
+}
+
