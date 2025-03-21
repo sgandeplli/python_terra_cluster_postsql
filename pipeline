@@ -6,7 +6,7 @@ pipeline {
         ARTIFACT_REPO = "us-central1-docker.pkg.dev/sam-453310/python-cluster1"
         CLUSTER_NAME = "cluster-2"
         GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp')
-        DEPLOY_YAML = "sql.yml"
+        DEPLOY_YAML = "frontend.yml"
     }
     stages {
         stage('docker login') {
