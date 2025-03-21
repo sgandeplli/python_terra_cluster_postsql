@@ -3,7 +3,7 @@ variable "cluster_name" {
   
 }
 variable "region" {
-    default = "us-central1-e"
+    default = "us-central1-c"
   
 }
 variable "node_count" {
