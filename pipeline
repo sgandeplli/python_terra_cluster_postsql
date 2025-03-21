@@ -2,11 +2,11 @@ pipeline {
     agent any
     environment {
         ZONE = "us-central1-e"
-        IMAGE_NAME = "pythonn-kubernets"
+        IMAGE_NAME = "python-kubernetes"  // Fixed typo
         ARTIFACT_REPO = "us-central1-docker.pkg.dev/sam-453310/python-cluster1"
         CLUSTER_NAME = "cluster-2"
         GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp')
-        DEPLOY_YAML= "sql.yml"
+        DEPLOY_YAML = "sql.yml"
     }
     stages {
         stage('docker login') {
@@ -20,9 +20,6 @@ pipeline {
                 }
             }
         }
-     
-
-
         stage('gcp login') {
             steps {
                 sh '''
@@ -34,7 +31,7 @@ pipeline {
         stage("build image") {
             steps {
                 sh '''
-                docker build "$IMAGE_NAME" .
+                docker build -t "$IMAGE_NAME" .  # Fixed command
                 docker tag "$IMAGE_NAME" ganesh6498/$IMAGE_NAME:$BUILD_NUMBER
                 '''
             }
@@ -50,7 +47,6 @@ pipeline {
             steps {
                 script {
                     echo 'Updating deployment YAML with the latest Docker image...'
-                    // Update the image in the deployment.yaml file to match the built image
                     sh """
                     sed -i 's|image: .*|image: ganesh6498/${IMAGE_NAME}:${BUILD_NUMBER}|' ${DEPLOY_YAML}
                     """
@@ -68,6 +64,7 @@ pipeline {
         stage('terraform apply') {
             steps {
                 sh ''' 
+              
                 terraform init
                 terraform plan
                 terraform apply --auto-approve
@@ -79,7 +76,7 @@ pipeline {
                 retry(3) {
                     sh '''  
                     sleep 10
-                    gcloud container clusters get-credentials $CLUSTER_NAME --zone '$ZONE' --project sam-453310
+                    gcloud container clusters get-credentials $CLUSTER_NAME --zone $ZONE --project sam-453310  # Fixed variable
                     '''
                 }
             }
@@ -87,8 +84,11 @@ pipeline {
         stage('Label Node') {
             steps {
                 script {
-                    NODE_NAME = sh(script: "kubectl get nodes -o jsonpath='{.items[0].metadata.name}'", returnStdout: true).trim()
-                    sh "kubectl label nodes $NODE_NAME label=sql --overwrite"
+                    retry(3) {
+                        sleep(10)
+                        NODE_NAME = sh(script: "kubectl get nodes -o jsonpath='{.items[0].metadata.name}'", returnStdout: true).trim()
+                        sh "kubectl label nodes $NODE_NAME label=sql --overwrite"
+                    }
                 }
             }
         }
