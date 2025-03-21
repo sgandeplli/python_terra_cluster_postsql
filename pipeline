@@ -106,10 +106,39 @@ pipeline {
         stage("get svc") {
             steps {
                 sh ''' 
+                  sleep 20
                 kubectl get svc
                 '''
             }
         }
+     post {
+    success {
+        mail to: 'ganeshreddy6498@gmail.com',
+             subject: 'Jenkins Pipeline Succeeded',
+             body: """Hello,
+
+Your Jenkins pipeline has completed successfully. 🎉
+
+Regards,
+Jenkins
+"""
+    }
+    failure {
+        mail to: 'ganeshreddy6498@gmail.com',
+             subject: 'Jenkins Pipeline Failed',
+             body: """Hello,
+
+Your Jenkins pipeline has failed. ❌
+
+Please check the logs for more details.
+
+Regards,
+Jenkins
+"""
+    }
+}
+
+
     }
 }
 
