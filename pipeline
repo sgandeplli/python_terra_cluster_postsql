@@ -6,7 +6,7 @@ pipeline {
         ARTIFACT_REPO = "us-central1-docker.pkg.dev/sam-453310/python-cluster1"
         CLUSTER_NAME = "cluster-2"
         GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp')
-        DEPLOY_YAML= sql.yml
+        DEPLOY_YAML= "sql.yml"
     }
     stages {
         stage('docker login') {
@@ -20,17 +20,7 @@ pipeline {
                 }
             }
         }
-     stage('Update Deployment File') {
-            steps {
-                script {
-                    echo 'Updating deployment YAML with the latest Docker image...'
-                    // Update the image in the deployment.yaml file to match the built image
-                    sh """
-                    sed -i 's|image: .*|image: ${DOCKER_HUB_USERNAME}/${DOCKER_IMAGE_NAME}:${DOCKER_TAG}|' ${DEPLOY_YAML}
-                    """
-                }
-            }
-        }
+     
 
 
         stage('gcp login') {
@@ -54,6 +44,17 @@ pipeline {
                 sh '''
                 docker push ganesh6498/$IMAGE_NAME:$BUILD_NUMBER
                 '''
+            }
+        }
+        stage('Update Deployment File') {
+            steps {
+                script {
+                    echo 'Updating deployment YAML with the latest Docker image...'
+                    // Update the image in the deployment.yaml file to match the built image
+                    sh """
+                    sed -i 's|image: .*|image: ganesh6498/${IMAGE_NAME}:${BUILD_NUMBER}|' ${DEPLOY_YAML}
+                    """
+                }
             }
         }
         stage("push artifact") {
