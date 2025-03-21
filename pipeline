@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        ZONE = "us-central1-e"
+        ZONE = "us-central1-c"
         IMAGE_NAME = "python-kubernetes"  // Fixed typo
         ARTIFACT_REPO = "us-central1-docker.pkg.dev/sam-453310/python-cluster1"
         CLUSTER_NAME = "cluster-2"
