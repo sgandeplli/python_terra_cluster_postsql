@@ -2,6 +2,26 @@
 
 sql service name must match in the application of fronend flask app.py host connection
 
+to inside to pod od post sql
+kubectl exec -it <postgres-pod-name> -- psql -U postgres -d mydatabase
+
+
+mydatabase=# SELECT * FROM users;
+  1 | sam       | greddy@softility.com
+  3 | okay raju | ganesh@gmail.com
+
+mydatabase=# DELETE FROM users WHERE id=2;
+DELETE 0
+mydatabase=# DELETE FROM users WHERE id=3;
+DELETE 1
+mydatabase=# SELECT * FROM users;
+  1 | sam  | greddy@softility.com
+
+mydatabase=#
+
+
+
+
 1️⃣ **Set PostgreSQL Credentials in Dockerfile**  
    ```dockerfile
    ENV POSTGRES_USER=postgres
