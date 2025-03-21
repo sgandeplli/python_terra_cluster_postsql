@@ -3,10 +3,10 @@ pipeline {
     environment {
         ZONE = "us-central1-e"
         IMAGE_NAME = "pythonn-kubernets"
-        ARTIFACT_REPO = "us-central1-docker.pkg.dev/sam-452209/my-docker-1"
+        ARTIFACT_REPO = "us-central1-docker.pkg.dev/valued-decker-453309-a2/python-cluster"
         CLUSTER_NAME = "cluster-2"
         GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp')
-        D
+        DEPLOY_YAML= sql.yml
     }
     stages {
         stage('docker login') {
