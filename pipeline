@@ -99,6 +99,7 @@ pipeline {
                 kubectl apply -f sql.yml
                 kubectl apply -f sql_service.yml
                 kubectl apply -f frontend.yml
+
                 ''' 
             }
         }
